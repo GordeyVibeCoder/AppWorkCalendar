@@ -8,7 +8,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.appworkcalendar.R
 
 @Composable
 fun ProfileScreen(
@@ -16,11 +18,13 @@ fun ProfileScreen(
     onImport: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(20.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Технический экран профиля")
-        Button(onClick = onExport) { Text("Export") }
-        Button(onClick = onImport) { Text("Import") }
+        Text(stringResource(R.string.profile_tech))
+        Button(onClick = onExport) { Text(stringResource(R.string.export)) }
+        Button(onClick = onImport) { Text(stringResource(R.string.import)) }
     }
 }

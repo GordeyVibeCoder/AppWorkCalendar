@@ -18,6 +18,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.appworkcalendar.R
 import com.example.appworkcalendar.data.AppDatabase
 import com.example.appworkcalendar.data.AppRepository
 import com.example.appworkcalendar.domain.ContactData
@@ -126,7 +128,15 @@ private fun AppRoot(repository: AppRepository) {
                                 Screen.Profile -> Icon(Icons.Default.AccountCircle, null)
                             }
                         },
-                        label = { Text(screen.title) }
+                        label = {
+                            Text(
+                                when (screen) {
+                                    Screen.Home -> stringResource(R.string.nav_home)
+                                    Screen.Earnings -> stringResource(R.string.nav_earnings)
+                                    Screen.Profile -> stringResource(R.string.nav_profile)
+                                }
+                            )
+                        }
                     )
                 }
             }

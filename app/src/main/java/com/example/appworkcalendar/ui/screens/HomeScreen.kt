@@ -1,5 +1,6 @@
 package com.example.appworkcalendar.ui.screens
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -15,6 +17,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Contacts
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,13 +37,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.appworkcalendar.R
 import com.example.appworkcalendar.data.Appointment
 import com.example.appworkcalendar.domain.ContactData
 import com.example.appworkcalendar.ui.components.DateScrollBar
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+
+private val timeRegex = Regex("^([01]\\d|2[0-3]):([0-5]\\d)$")
+private val phoneRegex = Regex("^\\+?\\d{10,15}$")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,16 +65,19 @@ fun HomeScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(onClick = { showForm = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Добавить")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
             }
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             DateScrollBar(selectedDate = selectedDate, onDateClick = onDateChange)
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 OutlinedButton(onClick = { showCalendar = true }) {
                     Icon(Icons.Default.CalendarMonth, contentDescription = null)
-                    Text("Календарь", modifier = Modifier.padding(start = 8.dp))
+                    Text(stringResource(R.string.calendar), modifier = Modifier.padding(start = 8.dp))
                 }
             }
 
@@ -74,17 +85,21 @@ fun HomeScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxSize().padding(12.dp)
             ) {
-                if (appointments.isEmpty()) {
-                    item {
-                        Text("На этот день записей нет", style = MaterialTheme.typography.bodyLarge)
-                    }
+                if (appointments.isEmpty()) item {
+                    Text(stringResource(R.string.no_appointments), style = MaterialTheme.typography.bodyLarge)
                 }
                 items(appointments) { appointment ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    Card(
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.70f)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f), RoundedCornerShape(20.dp))
+                    ) {
                         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("${appointment.startTime} • ${appointment.procedureName}")
                             Text("${appointment.clientName} (${appointment.phone})")
-                            Text("${appointment.durationMinutes} мин • ${appointment.costRub} ₽")
+                            Text(stringResource(R.string.minutes_short, appointment.durationMinutes, appointment.costRub))
                         }
                     }
                 }
@@ -102,9 +117,9 @@ fun HomeScreen(
                         onDateChange(Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate())
                     }
                     showCalendar = false
-                }) { Text("Ок") }
+                }) { Text(stringResource(R.string.ok)) }
             },
-            dismissButton = { TextButton(onClick = { showCalendar = false }) { Text("Отмена") } }
+            dismissButton = { TextButton(onClick = { showCalendar = false }) { Text(stringResource(R.string.cancel)) } }
         ) { DatePicker(state = state) }
     }
 
@@ -112,10 +127,7 @@ fun HomeScreen(
         AddAppointmentDialog(
             date = selectedDate,
             onDismiss = { showForm = false },
-            onSave = {
-                onSave(it)
-                showForm = false
-            },
+            onSave = { onSave(it); showForm = false },
             onPickContact = onPickContact
         )
     }
@@ -137,22 +149,35 @@ private fun AddAppointmentDialog(
     var clientName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var procedure by remember { mutableStateOf("") }
-    var duration by remember { mutableStateOf("60") }
-    var startTime by remember { mutableStateOf("10:00") }
-    var cost by remember { mutableStateOf("1500") }
+    var duration by remember { mutableStateOf("") }
+    var startTime by remember { mutableStateOf("") }
+    var cost by remember { mutableStateOf("") }
     var showCancelConfirm by remember { mutableStateOf(false) }
 
     val dirty = listOf(clientName, phone, procedure, duration, startTime, cost).any { it.isNotBlank() }
+    val durationValue = duration.toIntOrNull()
+    val costValue = cost.replace(',', '.').toDoubleOrNull()
+
+    val nameError = if (clientName.isBlank()) stringResource(R.string.error_required) else null
+    val phoneError = when {
+        phone.isBlank() -> stringResource(R.string.error_required)
+        !phoneRegex.matches(phone.trim()) -> stringResource(R.string.error_phone)
+        else -> null
+    }
+    val procedureError = if (procedure.isBlank()) stringResource(R.string.error_required) else null
+    val durationError = if (durationValue == null || durationValue <= 0) stringResource(R.string.error_duration) else null
+    val timeError = if (!timeRegex.matches(startTime.trim())) stringResource(R.string.error_time) else null
+    val costError = if (costValue == null || costValue <= 0) stringResource(R.string.error_cost) else null
+
+    val canSave = listOf(nameError, phoneError, procedureError, durationError, timeError, costError).all { it == null }
 
     AlertDialog(
-        onDismissRequest = {
-            if (dirty) showCancelConfirm = true else onDismiss()
-        },
+        onDismissRequest = { if (dirty) showCancelConfirm = true else onDismiss() },
         title = {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Новая запись")
+                Text(stringResource(R.string.new_appointment))
                 IconButton(onClick = { if (dirty) showCancelConfirm = true else onDismiss() }) {
-                    Icon(Icons.Default.Close, contentDescription = "Закрыть")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
                 }
             }
         },
@@ -165,48 +190,67 @@ private fun AddAppointmentDialog(
                     }
                 }) {
                     Icon(Icons.Default.Contacts, contentDescription = null)
-                    Text("Выбрать из контактов", modifier = Modifier.padding(start = 8.dp))
+                    Text(stringResource(R.string.pick_from_contacts), modifier = Modifier.padding(start = 8.dp))
                 }
-                OutlinedTextField(value = clientName, onValueChange = { clientName = it }, label = { Text("Имя клиента") })
-                OutlinedTextField(value = phone, onValueChange = { phone = it }, label = { Text("Номер телефона") })
-                OutlinedTextField(value = procedure, onValueChange = { procedure = it }, label = { Text("Процедура") })
-                OutlinedTextField(value = duration, onValueChange = { duration = it }, label = { Text("Длительность, мин") })
-                OutlinedTextField(value = startTime, onValueChange = { startTime = it }, label = { Text("Время начала (ЧЧ:ММ)") })
-                OutlinedTextField(value = cost, onValueChange = { cost = it }, label = { Text("Стоимость, ₽") })
+                InputField(clientName, { clientName = it }, R.string.client_name, nameError)
+                InputField(phone, { phone = it }, R.string.phone, phoneError)
+                InputField(procedure, { procedure = it }, R.string.procedure, procedureError)
+                InputField(duration, { duration = it }, R.string.duration_minutes, durationError)
+                InputField(startTime, { startTime = it }, R.string.start_time, timeError)
+                InputField(cost, { cost = it }, R.string.cost_rub, costError)
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                onSave(
-                    Appointment(
-                        clientName = clientName,
-                        phone = phone,
-                        procedureName = procedure,
-                        durationMinutes = duration.toIntOrNull() ?: 0,
-                        startTime = startTime,
-                        costRub = cost.replace(',', '.').toDoubleOrNull() ?: 0.0,
-                        date = date.toString()
+            TextButton(
+                enabled = canSave,
+                onClick = {
+                    onSave(
+                        Appointment(
+                            clientName = clientName.trim(),
+                            phone = phone.trim(),
+                            procedureName = procedure.trim(),
+                            durationMinutes = durationValue!!,
+                            startTime = startTime.trim(),
+                            costRub = costValue!!,
+                            date = date.toString()
+                        )
                     )
-                )
-            }) { Text("Ок") }
+                }
+            ) { Text(stringResource(R.string.ok)) }
         },
         dismissButton = {
-            TextButton(onClick = { if (dirty) showCancelConfirm = true else onDismiss() }) { Text("Отмена") }
+            TextButton(onClick = { if (dirty) showCancelConfirm = true else onDismiss() }) {
+                Text(stringResource(R.string.cancel))
+            }
         }
     )
 
     if (showCancelConfirm) {
         AlertDialog(
             onDismissRequest = { showCancelConfirm = false },
-            title = { Text("Отменить ввод?") },
-            text = { Text("Данные формы будут потеряны.") },
+            title = { Text(stringResource(R.string.cancel_input_title)) },
+            text = { Text(stringResource(R.string.cancel_input_text)) },
             confirmButton = {
-                TextButton(onClick = {
-                    showCancelConfirm = false
-                    onDismiss()
-                }) { Text("Да") }
+                TextButton(onClick = { showCancelConfirm = false; onDismiss() }) { Text(stringResource(R.string.yes)) }
             },
-            dismissButton = { TextButton(onClick = { showCancelConfirm = false }) { Text("Нет") } }
+            dismissButton = { TextButton(onClick = { showCancelConfirm = false }) { Text(stringResource(R.string.no)) } }
         )
     }
+}
+
+@Composable
+private fun InputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    labelRes: Int,
+    error: String?
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(stringResource(labelRes)) },
+        isError = error != null,
+        supportingText = { if (error != null) Text(error) },
+        modifier = Modifier.fillMaxWidth()
+    )
 }
