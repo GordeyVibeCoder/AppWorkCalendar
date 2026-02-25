@@ -1,0 +1,44 @@
+<resources>
+    <string name="app_name">AppWorkCalendar</string>
+    <string name="nav_home">Дом</string>
+    <string name="nav_earnings">Заработок</string>
+    <string name="nav_profile">Профиль</string>
+
+    <string name="add">Добавить</string>
+    <string name="calendar">Календарь</string>
+    <string name="no_appointments">На этот день записей нет</string>
+    <string name="minutes_short">%1$d мин • %2$.0f ₽</string>
+
+    <string name="new_appointment">Новая запись</string>
+    <string name="close">Закрыть</string>
+    <string name="pick_from_contacts">Выбрать из контактов</string>
+    <string name="client_name">Имя клиента</string>
+    <string name="phone">Номер телефона</string>
+    <string name="procedure">Процедура</string>
+    <string name="duration_minutes">Длительность, мин</string>
+    <string name="start_time">Время начала (ЧЧ:ММ)</string>
+    <string name="cost_rub">Стоимость, ₽</string>
+    <string name="ok">Ок</string>
+    <string name="cancel">Отмена</string>
+
+    <string name="cancel_input_title">Отменить ввод?</string>
+    <string name="cancel_input_text">Данные формы будут потеряны.</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+
+    <string name="error_required">Заполните поле</string>
+    <string name="error_phone">Введите телефон в формате +7XXXXXXXXXX</string>
+    <string name="error_duration">Введите длительность больше 0</string>
+    <string name="error_time">Введите время в формате ЧЧ:ММ</string>
+    <string name="error_cost">Введите стоимость больше 0</string>
+
+    <string name="period">Период: %1$s — %2$s</string>
+    <string name="total_earnings">Итоговая выручка: %1$.2f ₽</string>
+    <string name="pick_start">Выбрать начало</string>
+    <string name="pick_end">Выбрать конец</string>
+    <string name="start_label">Начало: %1$s</string>
+
+    <string name="profile_tech">Технический экран профиля</string>
+    <string name="export">Экспорт</string>
+    <string name="import">Импорт</string>
+</resources>
